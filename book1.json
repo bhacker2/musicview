@@ -1,0 +1,27 @@
+[
+    {
+        "title": "True Love",
+        "pdf_filename": "song1.pdf",
+        "description_filename": "song1_desc.txt"
+    },
+    {
+        "title": "Eleanor Rigby",
+        "pdf_filename": "song2.pdf",
+        "description_filename": "song2_desc.txt"
+    },
+    {
+        "title": "Golden Slumbers",
+        "pdf_filename": "song3.pdf",
+        "description_filename": null
+    },
+    {
+        "title": "That's Amore",
+        "pdf_filename": "song4.pdf",
+        "description_filename": "tune4_info.txt"
+    },
+    {
+        "title": "The Way You Look Tonight",
+        "pdf_filename": "song5.pdf",
+        "description_filename": "final_notes.txt"
+    }
+]
