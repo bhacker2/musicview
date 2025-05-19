@@ -24,11 +24,11 @@ import json  # For saving and loading songbooks
 class PDFViewer(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("MusicViewer")
+        self.setWindowTitle("MusicViewer - Perform Songbook")
         self.songbook = []  # Initialize as empty
         self.current_song_index = 0
         self.pdf_document = None
-        self.current_page_index_within_song = -1
+        self.current_page_index_within_song = -2  # Start with overview
         self.description_text_content = ""
         self.songbook_modified = False  # Flag to track changes
 
@@ -52,9 +52,9 @@ class PDFViewer(QMainWindow):
 
         self.tabs.currentChanged.connect(self._prompt_save_on_tab_change) # Connect tab change signal
 
-        self._load_songbook_from_file() # Load songbook on startup
-        self._update_status_bar()
-        QTimer.singleShot(100, self._show_content)
+        self._load_songbook_from_file() # Load songbook from file
+        self.show()
+        QTimer.singleShot(100, self._show_songbook_overview) # Show initial overview
 
     def _set_songbook_modified(self, modified=True):
         self.songbook_modified = modified
@@ -75,6 +75,9 @@ class PDFViewer(QMainWindow):
         self.content_layout.addWidget(self.pdf_label)
         self.description_display = QTextEdit()
         self.description_display.setReadOnly(True)
+        font = self.description_display.font()
+        font.setPointSize(14)  # Set the font size to 14 (you can adjust this value)
+        self.description_display.setFont(font)
         self.content_layout.addWidget(self.description_display)
         self.perform_layout.addWidget(self.content_area, 1)
 
@@ -148,6 +151,7 @@ class PDFViewer(QMainWindow):
         self.songbook_list_widget.clear()
         for song in self.songbook:
             self.songbook_list_widget.addItem(f"{song['title']} ({song['pdf_filename']})")
+
 
     def _add_song_to_songbook(self):
         title = self.add_title_input.text().strip()
@@ -294,7 +298,19 @@ class PDFViewer(QMainWindow):
                 event.accept() # Close if Save or Discard
         else:
             event.accept() # Close if no changes
-            
+
+    def _show_songbook_overview(self):
+        self.pdf_label.hide()
+        self.description_display.show()
+        overview_text = "Planned Performance:\n"
+        for i, song in enumerate(self.songbook):
+            overview_text += f"{i + 1}. {song['title']}\n"
+        self.description_display.setText(overview_text)
+        self.setWindowTitle("MusicViewer - Songbook Overview")
+        self.song_title_label.setText("Songbook Overview")
+        self.current_page_index_within_song = -2 # Ensure it's set to overview state
+
+
     def _clear_performance_view(self):
         self.song_title_label.clear()
         self.pdf_label.clear()
@@ -388,13 +404,19 @@ class PDFViewer(QMainWindow):
 
 
     def resizeEvent(self, event):
-        if self.pdf_document and self.current_page_index_within_song != -1:
+        if self.current_page_index_within_song == -2:
+            self._show_songbook_overview()
+        elif self.pdf_document and self.current_page_index_within_song != -1:
             self._show_content()
         super().resizeEvent(event)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_PageDown:
-            if self.current_page_index_within_song == -1:
+            if self.current_page_index_within_song == -2: # From overview, go to first song's description
+                self.current_song_index = 0
+                self._load_current_song() # This will set current_page_index_within_song to -1
+                self._show_content() # Show description
+            elif self.current_page_index_within_song == -1:
                 self.current_page_index_within_song = 0
                 self._show_content()
                 if self.pdf_document and len(self.pdf_document) > 1:
@@ -404,7 +426,7 @@ class PDFViewer(QMainWindow):
                 self._show_content()
             else:
                 self._next_song()
-                return  # Prevent further processing after song change
+                return
         elif event.key() == Qt.Key_PageUp:
             if self.current_page_index_within_song > 0:
                 self.current_page_index_within_song -= 1
@@ -412,6 +434,19 @@ class PDFViewer(QMainWindow):
             elif self.current_page_index_within_song == 0:
                 self.current_page_index_within_song = -1
                 self._show_content()
+            elif self.current_page_index_within_song == -1:
+                if self.current_song_index > 0:
+                    self.current_song_index -= 1
+                    self._load_current_song() # Load previous song
+                    if self.pdf_document and len(self.pdf_document) > 1:
+                        QTimer.singleShot(0, self._force_scale_last_page) # New: Force scale last page
+                    elif self.pdf_document:
+                        self.current_page_index_within_song = len(self.pdf_document) - 1 # Go to last page
+                    else:
+                        self.current_page_index_within_song = -1 # No PDF, show description
+                    self._show_content()
+                else:
+                    self._show_songbook_overview()
             else:
                 self._prev_song()
                 return
@@ -436,6 +471,19 @@ class PDFViewer(QMainWindow):
         if self.pdf_document:
             self.current_page_index_within_song = 0
             self._show_content()
+
+    def _force_scale_last_page(self):
+        if self.pdf_document and len(self.pdf_document) > 1:
+            last_page_index = len(self.pdf_document) - 1
+            self.current_page_index_within_song = last_page_index - 1 # Briefly go to second to last
+            self._show_content()
+            QTimer.singleShot(0, self._revert_to_last_page)
+
+    def _revert_to_last_page(self):
+        if self.pdf_document:
+            self.current_page_index_within_song = len(self.pdf_document) - 1
+            self._show_content()
+
 
     def _prev_song(self):
         if self.current_song_index > 0:
