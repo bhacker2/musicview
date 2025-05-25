@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QApplication
-from view import PDFViewerWindow
+#from view import PDFViewerWindow
+from pdf_viewer_window import PDFViewerWindow 
 from controller import PDFViewerController
 
 def main():
