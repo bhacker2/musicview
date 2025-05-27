@@ -51,15 +51,15 @@ class PDFViewerWindow(QMainWindow):
         self.controller = controller
    
 
-    def _update_status_bar(self):
-        total_songs = self.songbook.size()
-        current_song = self.songbook.songs[self.current_song_index] if self.songbook else {"title": "No Songs"}
-        current_song_title = current_song.get("title", "No Title")
-        current_pdf_pages = len(self.pdf_document) if self.pdf_document else 0
-        current_display_page = self.current_page_index_within_song + 1 if self.current_page_index_within_song != -1 else "Desc"
+    # def _update_status_bar(self):
+    #     total_songs = self.songbook.size()
+    #     current_song = self.songbook.songs[self.current_song_index] if self.songbook else {"title": "No Songs"}
+    #     current_song_title = current_song.get("title", "No Title")
+    #     current_pdf_pages = len(self.pdf_document) if self.pdf_document else 0
+    #     current_display_page = self.current_page_index_within_song + 1 if self.current_page_index_within_song != -1 else "Desc"
 
-        status_text = f"Song: {self.current_song_index + 1}/{total_songs} ({current_song_title}) | Page: {current_display_page}/{current_pdf_pages}"
-        self.window.statusbar.showMessage(status_text, 0)  # Use showMessage with a timeout of 0 (persistent)
+    #     status_text = f"Song: {self.current_song_index + 1}/{total_songs} ({current_song_title}) | Page: {current_display_page}/{current_pdf_pages}"
+    #     self.window.statusbar.showMessage(status_text, 0)  # Use showMessage with a timeout of 0 (persistent)
     
 
     def keyPressEvent(self, event):

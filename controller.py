@@ -4,7 +4,6 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtCore import Qt
 from model import Song, Songbook
 from view import PDFViewerWindow
-import sys
 import fitz  # PyMuPDF
 
 
@@ -32,9 +31,10 @@ class PDFViewerController:
         self.manage_tab_widget.move_down_button.clicked.connect(self._move_song_down)
         self.manage_tab_widget.load_button.clicked.connect(self._load_songbook_from_file)
         self.manage_tab_widget.save_button.clicked.connect(self._save_songbook_to_file)
-        self.window.tabs.currentChanged.connect(
-            self._prompt_save_on_tab_change
-        )  # Connect tab change signal
+        # self.window.tabs.currentChanged.connect(
+        #     self._prompt_save_on_tab_change
+        # )  # Connect tab change signal
+        self.window.tabs.currentChanged.connect(self._process_tab_changed)
 
         # fill view components with data as expected
         # perform
@@ -47,13 +47,6 @@ class PDFViewerController:
 
         self.window.show()
         QTimer.singleShot(100, self._show_songbook_overview)  # Show initial overview
-
-    def add_song(self):
-        # Gather input from view, update model, refresh view
-        pass
-
-    def remove_song(self):
-        pass
 
     # ... more controller methods for each action
 
@@ -150,6 +143,13 @@ class PDFViewerController:
             self.manage_tab_widget.songbook_list_widget.setCurrentRow(selected_index + 1)
             self._set_songbook_modified()
 
+    def _process_tab_changed(self, index):
+        if self.songbook_modified:
+            self._prompt_save_on_tab_change(index)
+        if index == self.window.tabs.indexOf(self.perform_tab_widget):
+            self._show_songbook_overview()
+    
+    
     def _prompt_save_on_tab_change(self, index):
         if self.songbook_modified and index == self.window.tabs.indexOf(
             self.perform_tab_widget
@@ -196,10 +196,10 @@ class PDFViewerController:
             self.current_song_index -= 1
             self._load_current_song()
         else:
-            self.manage_tab_widget.song_title_label.setText("First Song")
+            self.perform_tab_widget.song_title_label.setText("First Song")
             self.pdf_document = None
-            self.manage_tab_widget.description_display.clear()
-            self.manage_tab_widget.pdf_label.clear()
+            self.perform_tab_widget.description_display.clear()
+            self.perform_tab_widget.pdf_label.clear()
             self.current_song_index = -1
             self.current_page_index_within_song = -1
         self._update_status_bar()
@@ -221,6 +221,15 @@ class PDFViewerController:
 
     def _show_songbook_overview(self):
         self.perform_tab_widget._show_songbook_overview(self.songbook)
+        self.window.statusbar.showMessage(
+                    f"Songbook Overview", 5000
+                )
+        self.window.setWindowTitle(
+                f"MusicViewer - Performance Overview"
+            )
+        self.current_page_index_within_song = -2
+        self.current_song_index = -1
+        
 
     def _clear_performance_view(self):
         self.perform_tab_widget._clear_performance_view()
@@ -334,9 +343,11 @@ class PDFViewerController:
         if (
             self.current_page_index_within_song == -2
         ):  # From overview, go to first song's description
-            self.current_song_index = 0
-            self._load_current_song()  # This will set current_page_index_within_song to -1
-            self._show_content()  # Show description
+            #self.current_song_index = 0
+            self.current_page_index_within_song = -1
+            self._next_song()
+            # self._load_current_song()  # This will set current_page_index_within_song to -1
+            # self._show_content()  # Show description
         elif self.current_page_index_within_song == -1:
             self.current_page_index_within_song = 0
             self._show_content()

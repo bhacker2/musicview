@@ -69,13 +69,14 @@ class ManageTab(QWidget):
         # self._populate_songbook_list()
 
     def _populate_edit_fields(self, song):
-            selected_song = song
-            self.edit_title_input.setText(selected_song.title)
-            self.edit_pdf_input.setText(selected_song.pdf_filename)
-            self.edit_desc_input.setText(selected_song.description_filename)
+        selected_song = song
+        self.edit_title_input.setText(selected_song.title)
+        self.edit_pdf_input.setText(selected_song.pdf_filename)
+        self.edit_desc_input.setText(selected_song.description_filename)
 
     def _clear_add_fields(self):
         self.add_title_input.clear()
         self.add_pdf_input.clear()
         self.add_desc_input.clear()
+    
     
